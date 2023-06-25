@@ -1,5 +1,12 @@
-import Head from "next/head";
-import { Button } from "@chakra-ui/react";
+import {
+  Button,
+  Menu,
+  MenuButton,
+  MenuDivider,
+  MenuItemOption,
+  MenuList,
+  MenuOptionGroup,
+} from "@chakra-ui/react";
 import Layout from "@/components/Layout";
 import { GetStaticProps, InferGetStaticPropsType } from "next";
 import { BASE_URL } from "../../config/config";
@@ -8,63 +15,127 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import CountriesList from "@/components/CountriesList/CountriesList";
 import CustomPagination from "@/components/Pagination/Pagination";
-import { useEffect, useState } from "react";
-import { useCountries, useFilter, useSort } from "@/Context/CountriesContext";
+import { useEffect, useReducer, useState } from "react";
+import { useCountries, useHandleOperation } from "@/Context/CountriesContext";
+import { type } from "os";
+
+enum CountriesActionType {
+  ASC = "asc",
+  DES = "des",
+  BY_AREA = "by__area",
+  BY_REGION = "by__region",
+}
+
+interface CountriesAction {
+  type: CountriesActionType;
+}
 
 export default function Home({
   data,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  const countriesData = useCountries();
-  const sortCountries = useSort();
-  const filterCountries = useFilter();
+  const [countriesData, setData] = useState<CountryResponse[]>(data);
+  const handleOperation = useHandleOperation();
+  const [pagesNum, setPagesNum] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [isSortedAsc, setIsSortedAsc] = useState<boolean>(false);
-  const [isSortedDes, setIsSortedDes] = useState<boolean>(false);
-  const [isAreaFiltered, setIsAreaFiltered] = useState<boolean>(false);
-  const [isRegionFiltrered, setIsRegionFiltered] = useState<boolean>(false);
+  let initalState: CountriesState = {
+    isSortedAsc: false,
+    isSortedDes: false,
+    isAreaFiltered: false,
+    isRegionFiltrered: false,
+  };
+
+  const [state, dispatch] = useReducer(
+    (state: CountriesState, action: CountriesAction) => {
+      setIsLoading(true);
+      let newState = state;
+      switch (action.type) {
+        case CountriesActionType.ASC:
+          newState.isSortedAsc = true;
+          newState.isSortedDes = false;
+          console.log("Inside Case: ", newState);
+          break;
+
+        case CountriesActionType.DES:
+          newState.isSortedDes = true;
+          newState.isSortedAsc = false;
+          break;
+
+        case CountriesActionType.BY_AREA:
+          console.log("Here");
+
+          newState.isAreaFiltered = !newState.isAreaFiltered;
+          break;
+
+        case CountriesActionType.BY_REGION:
+          newState.isRegionFiltrered = !newState.isRegionFiltrered;
+          break;
+      }
+
+      console.log("New State: ", newState);
+      let d = handleOperation(data, newState);
+      setData(d);
+      setIsLoading(false);
+      return newState;
+    },
+    initalState
+  );
 
   const router = useRouter();
   let pageNum = router.query.page as unknown as number;
+  pageNum = Number(pageNum);
 
   let start_n: number = (pageNum - 1) * 10;
   let current_list = countriesData.slice(start_n, start_n + 10);
 
-  useEffect(() => {
-    sortCountries(data, "");
-  }, []);
   return (
     <>
       <Layout>
-        <Button
-          onClick={() => {
-            sortCountries(countriesData, "asc");
-            setIsSortedAsc(true);
-          }}
-        >
-          Sort
-        </Button>
-        <Button
-          onClick={() => {
-            sortCountries(countriesData, "des");
-            setIsSortedDes(true);
-          }}
-        >
-          Sort des
-        </Button>
-        <Button
-          onClick={() => {
-            filterCountries(countriesData, "by__area");
-          }}
-        >
-          Smaller than Lithuania
-        </Button>
-        <Button
-          onClick={() => {
-            filterCountries(countriesData, "by__region");
-          }}
-        >
-          In Oceania
-        </Button>
+        <Menu closeOnSelect={false}>
+          <MenuButton as={Button} colorScheme="blue">
+            Options
+          </MenuButton>
+          <MenuList minWidth="240px">
+            <MenuOptionGroup title="Order" type="radio">
+              <MenuItemOption
+                value="asc"
+                onClick={() => {
+                  dispatch({ type: CountriesActionType.ASC });
+                }}
+              >
+                Ascending
+              </MenuItemOption>
+              <MenuItemOption
+                value="des"
+                onClick={() => {
+                  dispatch({ type: CountriesActionType.DES });
+                }}
+              >
+                Descending
+              </MenuItemOption>
+            </MenuOptionGroup>
+            <MenuDivider />
+            <MenuOptionGroup title="Filteration" type="checkbox">
+              <MenuItemOption
+                value="by__region"
+                onClick={() => {
+                  dispatch({ type: CountriesActionType.BY_REGION });
+                }}
+              >
+                By region
+              </MenuItemOption>
+              <MenuItemOption
+                value="by__area"
+                onClick={() => {
+                  dispatch({ type: CountriesActionType.BY_AREA });
+                }}
+              >
+                By area
+              </MenuItemOption>
+            </MenuOptionGroup>
+          </MenuList>
+        </Menu>
+
         <CountriesList countries={current_list} pageNumber={pageNum} />
         <CustomPagination
           currPage={pageNum}

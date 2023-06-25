@@ -19,3 +19,10 @@ interface CountryNameResponse extends CountryResponse {
   population: number;
   borders: string[];
 }
+
+interface CountriesState {
+  isSortedAsc: boolean;
+  isSortedDes: boolean;
+  isAreaFiltered: boolean;
+  isRegionFiltrered: boolean;
+}

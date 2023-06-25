@@ -1,32 +1,29 @@
 import React, { useContext, useState } from "react";
 
 const CountriesContext = React.createContext<CountryResponse[]>([]);
-const CountriesSortContext = React.createContext(
-  (countires: CountryResponse[], type: string) => {}
-);
-const CountriesFilterContext = React.createContext(
-  (countires: CountryResponse[], type: string) => {}
+const HandleOperationContext = React.createContext(
+  (data: CountryResponse[], state: CountriesState): CountryResponse[] => {
+    return [];
+  }
 );
 
-const currentPageContext = React.createContext<number>(0);
 export function useCountries() {
   return useContext(CountriesContext);
 }
-export function useSort() {
-  return useContext(CountriesSortContext);
+
+export function useHandleOperation() {
+  return useContext(HandleOperationContext);
 }
 
-export function useFilter() {
-  return useContext(CountriesFilterContext);
-}
 export default function CountriesProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [countriesData, setData] = useState<CountryResponse[]>([]);
-
-  function sortCountries(countires: CountryResponse[], type: string): void {
+  function sortCountries(
+    countires: CountryResponse[],
+    type: string
+  ): CountryResponse[] {
     let fn = (a: CountryResponse, b: CountryResponse): number => {
       if (type == "asc") {
         if (a.name.common < b.name.common) return -1;
@@ -41,12 +38,13 @@ export default function CountriesProvider({
       return 1;
     };
     const sorted = countires.sort(fn);
-    console.log("Sorted: ", sorted);
-
-    setData(sorted);
+    return sorted;
   }
 
-  function filterCountries(countires: CountryResponse[], type: string): void {
+  function filterCountries(
+    countires: CountryResponse[],
+    type: string
+  ): CountryResponse[] {
     let fn = (country: CountryResponse) => {
       if (type == "by__region") {
         return country.region == "Oceania";
@@ -57,15 +55,36 @@ export default function CountriesProvider({
     };
 
     let filtered = countires.filter(fn);
-    setData(filtered);
+    return filtered;
+  }
+
+  function handleOperation(
+    data: CountryResponse[],
+    state: CountriesState
+  ): CountryResponse[] {
+    let newData = data;
+    if (state.isSortedAsc) {
+      newData = sortCountries(newData, "asc");
+    }
+
+    if (state.isSortedDes) {
+      newData = sortCountries(newData, "des");
+    }
+
+    if (state.isAreaFiltered) {
+      newData = filterCountries(newData, "by__area");
+    }
+
+    if (state.isRegionFiltrered) {
+      newData = filterCountries(newData, "by__region");
+    }
+    console.log("Data: ", newData);
+
+    return newData;
   }
   return (
-    <CountriesContext.Provider value={countriesData}>
-      <CountriesSortContext.Provider value={sortCountries}>
-        <CountriesFilterContext.Provider value={filterCountries}>
-          {children}
-        </CountriesFilterContext.Provider>
-      </CountriesSortContext.Provider>
-    </CountriesContext.Provider>
+    <HandleOperationContext.Provider value={handleOperation}>
+      {children}
+    </HandleOperationContext.Provider>
   );
 }
