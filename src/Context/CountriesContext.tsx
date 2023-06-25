@@ -4,6 +4,9 @@ const CountriesContext = React.createContext<CountryResponse[]>([]);
 const CountriesSortContext = React.createContext(
   (countires: CountryResponse[], type: string) => {}
 );
+const CountriesFilterContext = React.createContext(
+  (countires: CountryResponse[], type: string) => {}
+);
 
 const currentPageContext = React.createContext<number>(0);
 export function useCountries() {
@@ -11,6 +14,10 @@ export function useCountries() {
 }
 export function useSort() {
   return useContext(CountriesSortContext);
+}
+
+export function useFilter() {
+  return useContext(CountriesFilterContext);
 }
 export default function CountriesProvider({
   children,
@@ -38,10 +45,26 @@ export default function CountriesProvider({
 
     setData(sorted);
   }
+
+  function filterCountries(countires: CountryResponse[], type: string): void {
+    let fn = (country: CountryResponse) => {
+      if (type == "by__region") {
+        return country.region == "Oceania";
+      } else if (type == "by__area") {
+        return country.area < 65300;
+      }
+      return true;
+    };
+
+    let filtered = countires.filter(fn);
+    setData(filtered);
+  }
   return (
     <CountriesContext.Provider value={countriesData}>
       <CountriesSortContext.Provider value={sortCountries}>
-        {children}
+        <CountriesFilterContext.Provider value={filterCountries}>
+          {children}
+        </CountriesFilterContext.Provider>
       </CountriesSortContext.Provider>
     </CountriesContext.Provider>
   );

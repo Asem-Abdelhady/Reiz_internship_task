@@ -8,3 +8,14 @@ interface CountryResponse {
     png: string;
   };
 }
+
+interface CountryNameResponse extends CountryResponse {
+  maps: {
+    googleMaps: string;
+    openStreeMaps: string;
+  };
+  timezones: string[];
+  countries: string[];
+  population: number;
+  borders: string[];
+}

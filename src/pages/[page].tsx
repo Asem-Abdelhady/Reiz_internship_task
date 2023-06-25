@@ -9,19 +9,24 @@ import { useRouter } from "next/router";
 import CountriesList from "@/components/CountriesList/CountriesList";
 import CustomPagination from "@/components/Pagination/Pagination";
 import { useEffect, useState } from "react";
-import { useCountries, useSort } from "@/Context/CountriesContext";
+import { useCountries, useFilter, useSort } from "@/Context/CountriesContext";
 
 export default function Home({
   data,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const countriesData = useCountries();
   const sortCountries = useSort();
+  const filterCountries = useFilter();
+
+  const [isSortedAsc, setIsSortedAsc] = useState<boolean>(false);
+  const [isSortedDes, setIsSortedDes] = useState<boolean>(false);
+  const [isAreaFiltered, setIsAreaFiltered] = useState<boolean>(false);
+  const [isRegionFiltrered, setIsRegionFiltered] = useState<boolean>(false);
+
   const router = useRouter();
   let pageNum = router.query.page as unknown as number;
 
-  const [currCountries, setCurrCountries] = useState<CountryResponse[]>([]);
   let start_n: number = (pageNum - 1) * 10;
-
   let current_list = countriesData.slice(start_n, start_n + 10);
 
   useEffect(() => {
@@ -32,22 +37,39 @@ export default function Home({
       <Layout>
         <Button
           onClick={() => {
-            sortCountries(data, "asc");
-            setCurrCountries(countriesData);
+            sortCountries(countriesData, "asc");
+            setIsSortedAsc(true);
           }}
         >
           Sort
         </Button>
         <Button
           onClick={() => {
-            sortCountries(data, "des");
-            setCurrCountries(countriesData);
+            sortCountries(countriesData, "des");
+            setIsSortedDes(true);
           }}
         >
           Sort des
         </Button>
+        <Button
+          onClick={() => {
+            filterCountries(countriesData, "by__area");
+          }}
+        >
+          Smaller than Lithuania
+        </Button>
+        <Button
+          onClick={() => {
+            filterCountries(countriesData, "by__region");
+          }}
+        >
+          In Oceania
+        </Button>
         <CountriesList countries={current_list} pageNumber={pageNum} />
-        <CustomPagination currPage={pageNum} numOfPages={25} />
+        <CustomPagination
+          currPage={pageNum}
+          numOfPages={Math.ceil(countriesData.length / 10)}
+        />
       </Layout>
     </>
   );

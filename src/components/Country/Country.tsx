@@ -5,13 +5,12 @@ import {
   Heading,
   Divider,
   CardFooter,
-  ButtonGroup,
   Button,
   Image,
   Text,
-  Link,
   HStack,
 } from "@chakra-ui/react";
+import Link from "next/link";
 
 export default function Country(props: CountryResponse) {
   return (
@@ -40,9 +39,11 @@ export default function Country(props: CountryResponse) {
       </CardBody>
       <Divider />
       <CardFooter>
-        <Button variant="solid" colorScheme="tail">
-          View Details
-        </Button>
+        <Link href={`/country/${props.name.common}`}>
+          <Button variant="solid" colorScheme="teal">
+            View Details
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
