@@ -38,12 +38,13 @@ function getTenPages(
 ): CountryResponse[] {
   return countries.slice(start, start + 10);
 }
-export default function Home() {
+export default function Home({
+  data,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   const handleOperation = useHandleOperation();
 
   let initStart = ((router.query.page as unknown as number) - 1) * 10;
-  const [data, setData] = useState<CountryResponse[]>([]);
   const [start, setStart] = useState<number>(initStart ? initStart : 0);
   const [currentList, setCurrentList] = useState<CountryResponse[]>(
     getTenPages(data, start)
@@ -98,16 +99,6 @@ export default function Home() {
   //   initalState
   // );
 
-  useEffect(() => {
-    const URL = `${BASE_URL}/all?fields=name,region,area,flags,population,timezones,currencies,maps,independent`;
-    fetch(URL)
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data);
-        setCurrentList(getTenPages(data, start));
-      });
-  }, []);
-
   return (
     <>
       <Layout>
@@ -128,8 +119,9 @@ export default function Home() {
                   let newState = state;
                   newState.isSortedAsc = true;
                   newState.isSortedDes = false;
-                  setState(newState);
                   let countriesData = handleOperation(data, newState);
+                  newState.countriesData = countriesData;
+                  setState(newState);
                   setCurrentList(getTenPages(countriesData, start));
                 }}
               >
@@ -142,8 +134,9 @@ export default function Home() {
                   let newState = state;
                   newState.isSortedAsc = false;
                   newState.isSortedDes = true;
-                  setState(newState);
                   let countriesData = handleOperation(data, newState);
+                  newState.countriesData = countriesData;
+                  setState(newState);
                   setCurrentList(getTenPages(countriesData, start));
                 }}
               >
@@ -157,8 +150,9 @@ export default function Home() {
                 onClick={() => {
                   let newState = state;
                   newState.isRegionFiltrered = !newState.isRegionFiltrered;
-                  setState(newState);
                   let countriesData = handleOperation(data, newState);
+                  newState.countriesData = countriesData;
+                  setState(newState);
                   setCurrentList(getTenPages(countriesData, start));
                 }}
               >
@@ -169,8 +163,9 @@ export default function Home() {
                 onClick={() => {
                   let newState = state;
                   newState.isAreaFiltered = !newState.isAreaFiltered;
-                  setState(newState);
                   let countriesData = handleOperation(data, newState);
+                  newState.countriesData = countriesData;
+                  setState(newState);
                   setCurrentList(getTenPages(countriesData, start));
                 }}
               >
@@ -180,7 +175,7 @@ export default function Home() {
           </MenuList>
         </Menu>
         <CustomPagination
-          numOfPages={Math.ceil(data.length / 10)}
+          numOfPages={Math.ceil(state.countriesData.length / 10)}
           setStart={setStart}
           setCurrentList={setCurrentList}
           currPage={
@@ -195,3 +190,28 @@ export default function Home() {
     </>
   );
 }
+
+export async function getStaticPaths() {
+  const pages: { params: { page: string } }[] = [];
+  for (let i = 1; i <= 25; i++) {
+    pages.push({ params: { page: String(i) } });
+  }
+  return {
+    paths: pages,
+    fallback: false,
+  };
+}
+
+export const getStaticProps: GetStaticProps<{
+  data: CountryResponse[];
+}> = async (context) => {
+  const URL = `${BASE_URL}/all?fields=name,region,area,flags,population,timezones,currencies,maps,independent`;
+  const res = await axios.get<CountryResponse[]>(URL);
+  const data = res.data;
+
+  return {
+    props: {
+      data,
+    },
+  };
+};
