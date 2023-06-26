@@ -45,7 +45,7 @@ export default function Home({
   const handleOperation = useHandleOperation();
 
   let initStart = ((router.query.page as unknown as number) - 1) * 10;
-  const [start, setStart] = useState<number>(initStart);
+  const [start, setStart] = useState<number>(initStart ? initStart : 0);
   const [currentList, setCurrentList] = useState<CountryResponse[]>(
     getTenPages(data, start)
   );
