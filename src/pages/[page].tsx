@@ -58,43 +58,45 @@ export default function Home() {
     countriesData: data,
   };
 
-  const [state, dispatch] = useReducer(
-    (state: CountriesState, action: CountriesAction) => {
-      let newState = state;
-      if (newState.didRender) {
-        newState.didRender = false;
-        newState.countriesData = handleOperation(data, newState);
-        setCurrentList(
-          getTenPages(newState.countriesData, action.payLoad.start)
-        );
-        return newState;
-      }
-      switch (action.type) {
-        case CountriesActionType.ASC:
-          newState.isSortedAsc = true;
-          newState.isSortedDes = false;
-          break;
+  const [state, setState] = useState<CountriesState>(initalState);
 
-        case CountriesActionType.DES:
-          newState.isSortedDes = true;
-          newState.isSortedAsc = false;
-          break;
+  // const [state, dispatch] = useReducer(
+  //   (state: CountriesState, action: CountriesAction) => {
+  //     let newState = state;
+  //     if (newState.didRender) {
+  //       newState.didRender = false;
+  //       newState.countriesData = handleOperation(data, newState);
+  //       setCurrentList(
+  //         getTenPages(newState.countriesData, action.payLoad.start)
+  //       );
+  //       return newState;
+  //     }
+  //     switch (action.type) {
+  //       case CountriesActionType.ASC:
+  //         newState.isSortedAsc = true;
+  //         newState.isSortedDes = false;
+  //         break;
 
-        case CountriesActionType.BY_AREA:
-          newState.isAreaFiltered = !newState.isAreaFiltered;
-          break;
+  //       case CountriesActionType.DES:
+  //         newState.isSortedDes = true;
+  //         newState.isSortedAsc = false;
+  //         break;
 
-        case CountriesActionType.BY_REGION:
-          newState.isRegionFiltrered = !newState.isRegionFiltrered;
+  //       case CountriesActionType.BY_AREA:
+  //         newState.isAreaFiltered = !newState.isAreaFiltered;
+  //         break;
 
-          break;
-      }
+  //       case CountriesActionType.BY_REGION:
+  //         newState.isRegionFiltrered = !newState.isRegionFiltrered;
 
-      newState.didRender = true;
-      return newState;
-    },
-    initalState
-  );
+  //         break;
+  //     }
+
+  //     newState.didRender = true;
+  //     return newState;
+  //   },
+  //   initalState
+  // );
 
   useEffect(() => {
     const URL = `${BASE_URL}/all?fields=name,region,area,flags,population,timezones,currencies,maps,independent`;
@@ -123,10 +125,12 @@ export default function Home() {
                 value="asc"
                 isDisabled={state.isSortedAsc}
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.ASC,
-                    payLoad: { start: start },
-                  });
+                  let newState = state;
+                  newState.isSortedAsc = true;
+                  newState.isSortedDes = false;
+                  setState(newState);
+                  let countriesData = handleOperation(data, newState);
+                  setCurrentList(getTenPages(countriesData, start));
                 }}
               >
                 Ascending
@@ -135,10 +139,12 @@ export default function Home() {
                 value="des"
                 isDisabled={state.isSortedDes}
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.DES,
-                    payLoad: { start: start },
-                  });
+                  let newState = state;
+                  newState.isSortedAsc = false;
+                  newState.isSortedDes = true;
+                  setState(newState);
+                  let countriesData = handleOperation(data, newState);
+                  setCurrentList(getTenPages(countriesData, start));
                 }}
               >
                 Descending
@@ -149,10 +155,11 @@ export default function Home() {
               <MenuItemOption
                 value="by__region"
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.BY_REGION,
-                    payLoad: { start: start },
-                  });
+                  let newState = state;
+                  newState.isRegionFiltrered = !newState.isRegionFiltrered;
+                  setState(newState);
+                  let countriesData = handleOperation(data, newState);
+                  setCurrentList(getTenPages(countriesData, start));
                 }}
               >
                 By region
@@ -160,10 +167,11 @@ export default function Home() {
               <MenuItemOption
                 value="by__area"
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.BY_AREA,
-                    payLoad: { start: start },
-                  });
+                  let newState = state;
+                  newState.isAreaFiltered = !newState.isAreaFiltered;
+                  setState(newState);
+                  let countriesData = handleOperation(data, newState);
+                  setCurrentList(getTenPages(countriesData, start));
                 }}
               >
                 By area
@@ -171,15 +179,18 @@ export default function Home() {
             </MenuOptionGroup>
           </MenuList>
         </Menu>
-
-        <CountriesList countries={currentList} pageNumber={start} />
         <CustomPagination
-          numOfPages={Math.ceil(state.countriesData.length / 10)}
+          numOfPages={Math.ceil(data.length / 10)}
           setStart={setStart}
           setCurrentList={setCurrentList}
-          currPage={Number(router.query.page as unknown as number)}
-          countriesData={state.countriesData}
+          currPage={
+            Number(router.query.page as unknown as number)
+              ? Number(router.query.page as unknown as number)
+              : 1
+          }
+          countriesData={data}
         />
+        <CountriesList countries={currentList} pageNumber={start} />
       </Layout>
     </>
   );

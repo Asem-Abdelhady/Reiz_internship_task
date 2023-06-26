@@ -11,6 +11,7 @@ interface IProps {
 }
 export default function CustomPagination(props: IProps) {
   const router = useRouter();
+  console.log("Here");
 
   // Scroll to top when page changes
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
