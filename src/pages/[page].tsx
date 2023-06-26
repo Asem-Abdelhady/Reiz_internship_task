@@ -174,18 +174,15 @@ export default function Home({
             </MenuOptionGroup>
           </MenuList>
         </Menu>
+
+        <CountriesList countries={currentList} pageNumber={start} />
         <CustomPagination
           numOfPages={Math.ceil(state.countriesData.length / 10)}
           setStart={setStart}
           setCurrentList={setCurrentList}
-          currPage={
-            Number(router.query.page as unknown as number)
-              ? Number(router.query.page as unknown as number)
-              : 1
-          }
+          currPage={Number(router.query.page as unknown as number)}
           countriesData={data}
         />
-        <CountriesList countries={currentList} pageNumber={start} />
       </Layout>
     </>
   );
