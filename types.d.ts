@@ -7,6 +7,7 @@ interface CountryResponse {
     svg: string;
     png: string;
   };
+  population: number;
 }
 
 interface CountryNameResponse extends CountryResponse {
@@ -15,9 +16,8 @@ interface CountryNameResponse extends CountryResponse {
     openStreeMaps: string;
   };
   timezones: string[];
-  countries: string[];
-  population: number;
   borders: string[];
+  capital: string[];
 }
 
 interface CountriesState {
@@ -25,4 +25,6 @@ interface CountriesState {
   isSortedDes: boolean;
   isAreaFiltered: boolean;
   isRegionFiltrered: boolean;
+  didRender: boolean;
+  countriesData: CountryResponse[];
 }

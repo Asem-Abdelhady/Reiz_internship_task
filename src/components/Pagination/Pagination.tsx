@@ -5,13 +5,19 @@ import { useRouter } from "next/router";
 interface IProps {
   numOfPages: number;
   currPage: number;
+  setStart: Dispatch<SetStateAction<number>>;
+  setCurrentList: Dispatch<SetStateAction<CountryResponse[]>>;
+  countriesData: CountryResponse[];
 }
 export default function CustomPagination(props: IProps) {
   const router = useRouter();
 
   // Scroll to top when page changes
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    router.replace(`/${String(value)}`);
+    router.replace(`/${String(value)}`, undefined, { shallow: true });
+    const start_n = (value - 1) * 10;
+    props.setStart((value - 1) * 10);
+    props.setCurrentList(props.countriesData.slice(start_n, start_n + 10));
   };
 
   return (

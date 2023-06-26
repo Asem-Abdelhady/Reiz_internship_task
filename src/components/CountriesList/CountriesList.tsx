@@ -7,8 +7,6 @@ interface Props {
 }
 
 export default function CountriesList(props: Props) {
-  console.log("Current List: ", props.countries);
-
   let countries = props.countries.map((country) => (
     <Country
       key={Math.random() + 0.5}
@@ -17,6 +15,7 @@ export default function CountriesList(props: Props) {
       area={country.area}
       independent={country.independent}
       flags={country.flags}
+      population={country.population}
     />
   ));
   return (

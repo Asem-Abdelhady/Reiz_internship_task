@@ -12,12 +12,11 @@ import { GetStaticProps, InferGetStaticPropsType } from "next";
 import { BASE_URL } from "../../config/config";
 import axios from "axios";
 
-import { useRouter } from "next/router";
 import CountriesList from "@/components/CountriesList/CountriesList";
 import CustomPagination from "@/components/Pagination/Pagination";
-import { useEffect, useReducer, useState } from "react";
-import { useCountries, useHandleOperation } from "@/Context/CountriesContext";
-import { type } from "os";
+import { useReducer, useState } from "react";
+import { useHandleOperation } from "@/Context/CountriesContext";
+import { useRouter } from "next/router";
 
 enum CountriesActionType {
   ASC = "asc",
@@ -28,32 +27,53 @@ enum CountriesActionType {
 
 interface CountriesAction {
   type: CountriesActionType;
+  payLoad: {
+    start: number;
+  };
 }
 
+function getTenPages(
+  countries: CountryResponse[],
+  start: number
+): CountryResponse[] {
+  return countries.slice(start, start + 10);
+}
 export default function Home({
   data,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  const [countriesData, setData] = useState<CountryResponse[]>(data);
+  const router = useRouter();
   const handleOperation = useHandleOperation();
-  const [pagesNum, setPagesNum] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  let initStart = ((router.query.page as unknown as number) - 1) * 10;
+  const [start, setStart] = useState<number>(initStart);
+  const [currentList, setCurrentList] = useState<CountryResponse[]>(
+    getTenPages(data, start)
+  );
 
   let initalState: CountriesState = {
     isSortedAsc: false,
     isSortedDes: false,
     isAreaFiltered: false,
     isRegionFiltrered: false,
+    didRender: false,
+    countriesData: data,
   };
 
   const [state, dispatch] = useReducer(
     (state: CountriesState, action: CountriesAction) => {
-      setIsLoading(true);
       let newState = state;
+      if (newState.didRender) {
+        newState.didRender = false;
+        newState.countriesData = handleOperation(data, newState);
+        setCurrentList(
+          getTenPages(newState.countriesData, action.payLoad.start)
+        );
+        return newState;
+      }
       switch (action.type) {
         case CountriesActionType.ASC:
           newState.isSortedAsc = true;
           newState.isSortedDes = false;
-          console.log("Inside Case: ", newState);
           break;
 
         case CountriesActionType.DES:
@@ -62,53 +82,54 @@ export default function Home({
           break;
 
         case CountriesActionType.BY_AREA:
-          console.log("Here");
-
           newState.isAreaFiltered = !newState.isAreaFiltered;
           break;
 
         case CountriesActionType.BY_REGION:
           newState.isRegionFiltrered = !newState.isRegionFiltrered;
+
           break;
       }
 
-      console.log("New State: ", newState);
-      let d = handleOperation(data, newState);
-      setData(d);
-      setIsLoading(false);
+      newState.didRender = true;
       return newState;
     },
     initalState
   );
 
-  const router = useRouter();
-  let pageNum = router.query.page as unknown as number;
-  pageNum = Number(pageNum);
-
-  let start_n: number = (pageNum - 1) * 10;
-  let current_list = countriesData.slice(start_n, start_n + 10);
-
   return (
     <>
       <Layout>
         <Menu closeOnSelect={false}>
-          <MenuButton as={Button} colorScheme="blue">
+          <MenuButton
+            as={Button}
+            colorScheme="teal"
+            margin={"15px 0 15px 30px"}
+          >
             Options
           </MenuButton>
           <MenuList minWidth="240px">
             <MenuOptionGroup title="Order" type="radio">
               <MenuItemOption
                 value="asc"
+                isDisabled={state.isSortedAsc}
                 onClick={() => {
-                  dispatch({ type: CountriesActionType.ASC });
+                  dispatch({
+                    type: CountriesActionType.ASC,
+                    payLoad: { start: start },
+                  });
                 }}
               >
                 Ascending
               </MenuItemOption>
               <MenuItemOption
                 value="des"
+                isDisabled={state.isSortedDes}
                 onClick={() => {
-                  dispatch({ type: CountriesActionType.DES });
+                  dispatch({
+                    type: CountriesActionType.DES,
+                    payLoad: { start: start },
+                  });
                 }}
               >
                 Descending
@@ -119,7 +140,10 @@ export default function Home({
               <MenuItemOption
                 value="by__region"
                 onClick={() => {
-                  dispatch({ type: CountriesActionType.BY_REGION });
+                  dispatch({
+                    type: CountriesActionType.BY_REGION,
+                    payLoad: { start: start },
+                  });
                 }}
               >
                 By region
@@ -127,7 +151,10 @@ export default function Home({
               <MenuItemOption
                 value="by__area"
                 onClick={() => {
-                  dispatch({ type: CountriesActionType.BY_AREA });
+                  dispatch({
+                    type: CountriesActionType.BY_AREA,
+                    payLoad: { start: start },
+                  });
                 }}
               >
                 By area
@@ -136,10 +163,13 @@ export default function Home({
           </MenuList>
         </Menu>
 
-        <CountriesList countries={current_list} pageNumber={pageNum} />
+        <CountriesList countries={currentList} pageNumber={start} />
         <CustomPagination
-          currPage={pageNum}
-          numOfPages={Math.ceil(countriesData.length / 10)}
+          numOfPages={Math.ceil(state.countriesData.length / 10)}
+          setStart={setStart}
+          setCurrentList={setCurrentList}
+          currPage={Number(router.query.page as unknown as number)}
+          countriesData={state.countriesData}
         />
       </Layout>
     </>
@@ -163,6 +193,7 @@ export const getStaticProps: GetStaticProps<{
   const URL = `${BASE_URL}/all?fields=name,region,area,flags,population,timezones,currencies,maps,independent`;
   const res = await axios.get<CountryResponse[]>(URL);
   const data = res.data;
+
   return {
     props: {
       data,

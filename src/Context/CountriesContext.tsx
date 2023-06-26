@@ -1,15 +1,10 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 
-const CountriesContext = React.createContext<CountryResponse[]>([]);
 const HandleOperationContext = React.createContext(
   (data: CountryResponse[], state: CountriesState): CountryResponse[] => {
     return [];
   }
 );
-
-export function useCountries() {
-  return useContext(CountriesContext);
-}
 
 export function useHandleOperation() {
   return useContext(HandleOperationContext);
@@ -78,7 +73,6 @@ export default function CountriesProvider({
     if (state.isRegionFiltrered) {
       newData = filterCountries(newData, "by__region");
     }
-    console.log("Data: ", newData);
 
     return newData;
   }
