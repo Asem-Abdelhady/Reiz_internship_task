@@ -14,88 +14,37 @@ import axios from "axios";
 
 import CountriesList from "@/components/CountriesList/CountriesList";
 import CustomPagination from "@/components/Pagination/Pagination";
-import { useReducer, useState } from "react";
-import { useHandleOperation } from "@/Context/CountriesContext";
+import { useEffect, useReducer, useState } from "react";
+import {
+  useCountriesContext,
+  useCurrentListContext,
+  useHandleOperation,
+  useStateContext,
+} from "@/Context/CountriesContext";
 import { useRouter } from "next/router";
 
-enum CountriesActionType {
-  ASC = "asc",
-  DES = "des",
-  BY_AREA = "by__area",
-  BY_REGION = "by__region",
-}
-
-interface CountriesAction {
-  type: CountriesActionType;
-  payLoad: {
-    start: number;
-  };
-}
-
-function getTenPages(
+function getTenCountries(
   countries: CountryResponse[],
   start: number
 ): CountryResponse[] {
   return countries.slice(start, start + 10);
 }
+
 export default function Home({
   data,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   const handleOperation = useHandleOperation();
+  const state = useStateContext();
+  const countries = useCountriesContext();
+  const currentList = useCurrentListContext();
 
   let initStart = ((router.query.page as unknown as number) - 1) * 10;
   const [start, setStart] = useState<number>(initStart ? initStart : 0);
-  const [currentList, setCurrentList] = useState<CountryResponse[]>(
-    getTenPages(data, start)
-  );
 
-  let initalState: CountriesState = {
-    isSortedAsc: false,
-    isSortedDes: false,
-    isAreaFiltered: false,
-    isRegionFiltrered: false,
-    didRender: false,
-    countriesData: data,
-  };
-
-  const [state, dispatch] = useReducer(
-    (state: CountriesState, action: CountriesAction) => {
-      let newState = state;
-      if (newState.didRender) {
-        newState.didRender = false;
-        newState.countriesData = handleOperation(data, newState);
-        setCurrentList(
-          getTenPages(newState.countriesData, action.payLoad.start)
-        );
-        return newState;
-      }
-      switch (action.type) {
-        case CountriesActionType.ASC:
-          newState.isSortedAsc = true;
-          newState.isSortedDes = false;
-          break;
-
-        case CountriesActionType.DES:
-          newState.isSortedDes = true;
-          newState.isSortedAsc = false;
-          break;
-
-        case CountriesActionType.BY_AREA:
-          newState.isAreaFiltered = !newState.isAreaFiltered;
-          break;
-
-        case CountriesActionType.BY_REGION:
-          newState.isRegionFiltrered = !newState.isRegionFiltrered;
-
-          break;
-      }
-
-      newState.didRender = true;
-      return newState;
-    },
-    initalState
-  );
+  useEffect(() => {
+    handleOperation(data, "INIT", 0);
+  }, []);
 
   return (
     <>
@@ -114,10 +63,9 @@ export default function Home({
                 value="asc"
                 isDisabled={state.isSortedAsc}
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.ASC,
-                    payLoad: { start: start },
-                  });
+                  handleOperation(data, "asc", start);
+                  console.log("State: ", state);
+                  console.log("CurrentList", currentList);
                 }}
               >
                 Ascending
@@ -126,10 +74,9 @@ export default function Home({
                 value="des"
                 isDisabled={state.isSortedDes}
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.DES,
-                    payLoad: { start: start },
-                  });
+                  handleOperation(data, "des", start);
+                  console.log("State: ", state);
+                  console.log("CurrentList", currentList);
                 }}
               >
                 Descending
@@ -140,10 +87,9 @@ export default function Home({
               <MenuItemOption
                 value="by__region"
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.BY_REGION,
-                    payLoad: { start: start },
-                  });
+                  handleOperation(data, "by__region", start);
+                  console.log("State: ", state);
+                  console.log("CurrentList", currentList);
                 }}
               >
                 By region
@@ -151,10 +97,9 @@ export default function Home({
               <MenuItemOption
                 value="by__area"
                 onClick={() => {
-                  dispatch({
-                    type: CountriesActionType.BY_AREA,
-                    payLoad: { start: start },
-                  });
+                  handleOperation(data, "by__area", start);
+                  console.log("State: ", state);
+                  console.log("CurrentList", currentList);
                 }}
               >
                 By area
@@ -165,11 +110,10 @@ export default function Home({
 
         <CountriesList countries={currentList} pageNumber={start} />
         <CustomPagination
-          numOfPages={Math.ceil(state.countriesData.length / 10)}
+          numOfPages={Math.ceil(countries.length / 10)}
           setStart={setStart}
-          setCurrentList={setCurrentList}
           currPage={Number(router.query.page as unknown as number)}
-          countriesData={state.countriesData}
+          countriesData={countries}
         />
       </Layout>
     </>

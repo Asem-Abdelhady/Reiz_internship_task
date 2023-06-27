@@ -25,6 +25,15 @@ interface CountriesState {
   isSortedDes: boolean;
   isAreaFiltered: boolean;
   isRegionFiltrered: boolean;
-  didRender: boolean;
-  countriesData: CountryResponse[];
+}
+
+enum CountriesActionType {
+  ASC = "asc",
+  DES = "des",
+  BY_AREA = "by__area",
+  BY_REGION = "by__region",
+}
+
+interface CountriesAction {
+  type: CountriesActionType;
 }
