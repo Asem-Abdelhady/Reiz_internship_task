@@ -64,8 +64,6 @@ export default function Home({
                 isDisabled={state.isSortedAsc}
                 onClick={() => {
                   handleOperation(data, "asc", start);
-                  console.log("State: ", state);
-                  console.log("CurrentList", currentList);
                 }}
               >
                 Ascending
@@ -75,8 +73,6 @@ export default function Home({
                 isDisabled={state.isSortedDes}
                 onClick={() => {
                   handleOperation(data, "des", start);
-                  console.log("State: ", state);
-                  console.log("CurrentList", currentList);
                 }}
               >
                 Descending
@@ -88,8 +84,6 @@ export default function Home({
                 value="by__region"
                 onClick={() => {
                   handleOperation(data, "by__region", start);
-                  console.log("State: ", state);
-                  console.log("CurrentList", currentList);
                 }}
               >
                 By region
@@ -98,8 +92,6 @@ export default function Home({
                 value="by__area"
                 onClick={() => {
                   handleOperation(data, "by__area", start);
-                  console.log("State: ", state);
-                  console.log("CurrentList", currentList);
                 }}
               >
                 By area
